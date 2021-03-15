@@ -46,7 +46,7 @@
     - High performance for low latencies, but expensive
   - **Classic Load Balancer**: HTTP/HTTPS and TCP - Legacy
     - Supports some HTTP headers (e.g. `X-Forwarded-For`)
-- **`X-Forwarded-For` Header**: Includes source IPv4 address used to verify request origination
+- **`X-Forwarded-For` Header**: Includes IPv4 address of destination user
 - **Gateway Timeout Error (504)**: 
   - May be caused by ELB unable to connect to service/app or crash in apps.
 
@@ -54,7 +54,9 @@
 
 - DNS service used to map domain names to EC2 instances, load balancers, or S3 buckets
 - Can buy/register new domain names
-- **Hosted zones**: List of registered domain names
+- **Hosted zones**: Container of DNS records for a domain
+- **Alias**: Used to route traffic at the top of a DNS namespace to an AWS resource
+- **A Record**: Route traffic to a resource with an IPv4 address
 
 ## RDS (Relational Database Service)
 

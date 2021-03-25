@@ -2,6 +2,23 @@
 
 - **Roles**: Can be used to assign permissions against users, apps or services to interact with other AWS resources
 - **IAM Policy**: Permission definitions attached to users, groups or roles
+  - **AWS Managed Policies**: IAM policies defined by AWS
+  - **Customer Managed Policies**: Policies created inside an AWS account that can be applied to services within that account
+  - **Inline Policies**: A policy embedded within a single user, role or group; strictly attached to the user/role/group
+- **Web Identity Federation**: Auth with external providers - receive authentication code that can be traded with AWS creds
+
+## Cognito
+
+- Provides temp creds through web federation and mapped to an IAM role for access to AWS resources
+- Data synced across user devices
+- **User Pool**: Directories to manage sign-up/sign-in
+- **Identity Pool**: Takes a user's web JWT and provides temp AWS creds
+- Uses Push Synchronisation with SNS to update user data across all devices
+
+## Security Token Service (STS)
+
+- `assume-role-with-web-identity-api`: Return temp creds for authenticated users
+  - Usually for web apps; Cognito recommended for mobile apps
 
 ## EC2 (Elastic Compute Cloud)
 
@@ -12,6 +29,13 @@
   - **Spot**: Use unused capacity - good for short term, high load work - cheap (with changing prices based on demand) but unstable 
   - **Dedicated hosts**: Physical dedicated server - good for compliance or licensing which requires dedicated server (i.e. no multi-tennancy)
 - Pay up front or commit for 1/3 years for discounts
+- **Encryption**:
+  -  HTTPS connections on EC2 instances to ensure end-to-end data encryption
+  - To run a decrypt operation on files encrypted with KMS, the EC2 instance must have an instance role for the decrypt operation
+
+## Elastic Container Service (ECS)
+
+- Manages running docker containers on a group of EC2 instances
 
 ## EBS (Elastic Block Store)
 
@@ -42,13 +66,14 @@
 - **Types of load balancers**:
   - **Application Load Balancer**: HTTP/HTTPS
     - Routes requests based on HTTP headers and type of request
+    - Supports routing of access logs into an S3 bucket
   - **Network Load Balancer**: TCP - High performance
     - High performance for low latencies, but expensive
   - **Classic Load Balancer**: HTTP/HTTPS and TCP - Legacy
     - Supports some HTTP headers (e.g. `X-Forwarded-For`)
 - **`X-Forwarded-For` Header**: Includes IPv4 address of destination user
 - **Gateway Timeout Error (504)**: 
-  - May be caused by ELB unable to connect to service/app or crash in apps.
+  - May be caused by ELB unable to connect to service/app or crash in apps
 
 ## Route 53
 
@@ -105,12 +130,17 @@
 - Free option has 10k parameters with 4KB parameters and no parameter policies
 - Paid advanced option available for storing 10k+ parameters with 8KB paramaters and parameter policies
 
+## Secrets Manager
+
+- Used to securely store, retrieve, and automatically rotate **database credentials**
+
 ## S3 (Simple Storage Service)
 
 - S3 is an object-based key-value store, with the object filename as the **key**
   - Objects also have a **version ID** and **metadata**
   - Objects can be up to 5TB
   - Largest object upload size via a single PUT request is 5GB
+  - Recommended to use **multi-part** uploads for files >100MB
 - S3 bucket names are globally unique
 - S3 URLs are structured as `https://<bucket-name>.s3.<region>.amazonaws.com/<filename/key>`
 - **Lifecycle management**: Can automatically transition objects to a cheaper S3 tier and delete objects when unused
@@ -154,10 +184,13 @@
   - **Client side encryption** as encrypted by the user before upload
 - Encryption can be enforced by:
   - **AWS console** during bucket creation
+  - Enabling default encryption on the bucket for server-side encryption
   - A **bucket policy** by denying all PUT requests without an SSE encryption header
     - Can be done in **policy generator** by adding a condition 
 - S3 can be used to host static websites
   - Assets can be referenced across buckets if **CORS** is configured by adding the endpoint in the `AllowedOrigin` setting
+- Use pre-signed URLs to grant temporary access to an object within a bucket, even if it is private
+- 
 
 ## CloudFront
 
@@ -167,6 +200,7 @@
 - Default cache TTL is. 1 day
   - Can be manually cleared but will be charged a fee
 - Use signed URLs or signed cookies to restrict viewer access (e.g. for paid content)
+- Change the **Viewer Protocol Policy** to enable HTTPS requests
 
 ## Lambda
 
@@ -209,6 +243,7 @@
   - If it receives 10,000 requests but no more immediately, it will process 5000 requests first concurrently, then the other 5000 within a one second period without error
   - Otherwise, it will return 429 *TooManyRequests*
   - Limits can be increased through support
+- Use **Stage Variables** (key-value pairs) based on the API deployment stage to interact with different endpoints
 
 ## DynamoDB
 
@@ -338,6 +373,7 @@
 - Automatically configures load balancers, EC2 instances with HTTP servers and auto-scaling, data stores, databases and monitoring
 - Automatically manages infrastructure, infrastructure provisioning and updates
 - Elastic Beanstalk itself is free (not including resources used)
+- Supports containers using Docker or with custom AMI's using Packer
 - **Rollout methods**:
   - **All at once**: Deploys to all instances simultaneously
     - Will experience outage for all instances while redeploying
@@ -353,7 +389,7 @@
   - Terminating an environment within the EB environment will delete the DB too (good for test purposes)
   - Configuring outside of an EB environment requires configuration of a security group and DB connection strings
 
-## Cloudformation
+## CloudFormation
 
 - Infrastructure as code service - create templates to manage, configure and provision AWS infrastructure
 - Free to use - only charged for resources used
@@ -363,5 +399,28 @@
 - **Transform**: Import and use external snippets to add to the template
 - **Resources**: The AWS resources and their configurations that will be provisioned and deployed
   - This is the only mandatory section of the template
-- **Outputs**: References of resources from output of stack
+- **Outputs**: References of resources from output of stack - can be used as inputs to another CloudFormation stack
+- Can have nested CloudFormation stacks by specifying a resource with type `AWS::CloudFormation::Stack` and by specifying a template URL which is the stack template
+- **Change Sets** can be used to update existing stacks
 
+## Serverless Application Model (SAM)
+
+- Used to configure, package and deploy serverless applications with Lambda, DynamoDB and S3 in a CloudFormation stack
+
+## CloudWatch
+
+- Monitoring service to monitor health and performance of AWS services
+- Metrics stored indefinitely by default
+- **CloudWatch Agent**: Define your own metrics
+  - Can also be used to collect OS level metrics
+  - Can be used to monitor app or system log files in near real-time
+- **CloudWatch Alarms**: Trigger alarms based on utilisation, latency, or charges on AWS bills
+
+## CloudTrail
+
+- Records user activity in an AWS account (essentially an audit trail of an AWS account)
+- Can view the last 90 days of activity (by default)
+
+## CodeDeploy
+
+- Supports EC2, on-premise servers, ECS, Lambda and Fargate
